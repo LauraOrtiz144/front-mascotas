@@ -3,76 +3,156 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mis Mascotas</title>
+  <title>Patitas · Registro de mascotas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <main class="app">
-    <header class="app__header">
-      <h1>Mis Mascotas</h1>
-      <p class="app__subtitle">Conectado a la API de Mascotas</p>
-    </header>
-
-    <form id="pet-form" class="task-form">
-      <div class="task-form__row">
-        <input type="text" id="nombre-input" placeholder="Nombre" maxlength="60" required />
+  <header class="hero">
+    <div class="hero__inner">
+      <div class="brand">
+        <span class="brand__logo" aria-hidden="true">🐾</span>
+        <div>
+          <h1>Patitas</h1>
+          <p>Registro de mascotas conectado a MongoDB</p>
+        </div>
       </div>
-      <div class="task-form__row task-form__row--split">
-        <input type="text" id="especie-input" placeholder="Especie (Perro, Gato...)" maxlength="40" required />
-        <input type="text" id="raza-input" placeholder="Raza" maxlength="60" required />
-      </div>
-      <div class="task-form__row task-form__row--split">
-        <input type="number" id="edad-input" placeholder="Edad (años)" min="0" step="1" required />
-        <label class="check-label">
-          <input type="checkbox" id="vacunada-input" />
-          Vacunada
-        </label>
-      </div>
-      <button type="submit" class="btn btn--primary">
-        <span>Agregar mascota</span>
-      </button>
-    </form>
+      <button type="button" id="open-form-btn" class="btn btn--light">+ Nueva mascota</button>
+    </div>
+  </header>
 
-    <div id="status" class="status" role="status" aria-live="polite" hidden></div>
-
-    <section class="task-list-section">
-      <div class="task-list-header">
-        <h2>Sin vacunar <span id="count-pending" class="count-badge">0</span></h2>
-      </div>
-      <ul id="pending-list" class="task-list"></ul>
-
-      <div class="task-list-header task-list-header--done">
-        <h2>Vacunadas <span id="count-done" class="count-badge">0</span></h2>
-      </div>
-      <ul id="done-list" class="task-list"></ul>
-
-      <p id="empty-message" class="empty-message" hidden>
-        No tienes mascotas registradas todavía. ¡Agrega la primera!
-      </p>
+  <main class="layout">
+    <!-- Estadísticas -->
+    <section class="stats" aria-label="Resumen">
+      <article class="stat">
+        <span class="stat__icon">🐾</span>
+        <div><p class="stat__value" id="stat-total">0</p><p class="stat__label">Mascotas</p></div>
+      </article>
+      <article class="stat">
+        <span class="stat__icon">💉</span>
+        <div><p class="stat__value" id="stat-vacunadas">0%</p><p class="stat__label">Vacunadas</p></div>
+      </article>
+      <article class="stat">
+        <span class="stat__icon">🎂</span>
+        <div><p class="stat__value" id="stat-edad">0</p><p class="stat__label">Edad promedio</p></div>
+      </article>
+      <article class="stat">
+        <span class="stat__icon">⭐</span>
+        <div><p class="stat__value" id="stat-especie">—</p><p class="stat__label">Especie más común</p></div>
+      </article>
     </section>
+
+    <!-- Barra de búsqueda y filtros -->
+    <section class="toolbar">
+      <div class="search">
+        <span aria-hidden="true">🔍</span>
+        <input type="search" id="search-input" placeholder="Buscar por nombre o raza..." />
+      </div>
+      <div class="toolbar__group">
+        <select id="sort-select" aria-label="Ordenar">
+          <option value="recientes">Más recientes</option>
+          <option value="nombre">Nombre (A-Z)</option>
+          <option value="edad-asc">Más jóvenes</option>
+          <option value="edad-desc">Mayores</option>
+        </select>
+        <div class="segmented" role="group" aria-label="Filtrar por vacunación">
+          <button type="button" class="segmented__btn is-active" data-vac="todas">Todas</button>
+          <button type="button" class="segmented__btn" data-vac="si">Vacunadas</button>
+          <button type="button" class="segmented__btn" data-vac="no">Pendientes</button>
+        </div>
+      </div>
+    </section>
+
+    <div id="species-chips" class="chips" aria-label="Filtrar por especie"></div>
+
+    <!-- Lista -->
+    <section id="pet-grid" class="grid" aria-live="polite"></section>
+
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <p id="loading-text">Cargando mascotas...</p>
+    </div>
+
+    <div id="empty" class="empty" hidden>
+      <span class="empty__icon">🐶</span>
+      <h3 id="empty-title">Aún no hay mascotas</h3>
+      <p id="empty-text">Registra la primera con el botón “Nueva mascota”.</p>
+    </div>
   </main>
 
-  <div id="edit-modal" class="modal" hidden>
-    <div class="modal__backdrop" data-close-modal></div>
-    <div class="modal__content">
-      <h3>Editar mascota</h3>
-      <form id="edit-form">
-        <input type="hidden" id="edit-id" />
-        <label for="edit-nombre">Nombre</label>
-        <input type="text" id="edit-nombre" maxlength="60" required />
-        <label for="edit-especie">Especie</label>
-        <input type="text" id="edit-especie" maxlength="40" required />
-        <label for="edit-raza">Raza</label>
-        <input type="text" id="edit-raza" maxlength="60" required />
-        <label for="edit-edad">Edad (años)</label>
-        <input type="number" id="edit-edad" min="0" step="1" required />
+  <!-- Modal crear / editar -->
+  <div id="form-modal" class="modal" hidden>
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="form-title">
+      <div class="modal__head">
+        <h2 id="form-title">Nueva mascota</h2>
+        <button type="button" class="icon-btn" data-close aria-label="Cerrar">✕</button>
+      </div>
+
+      <form id="pet-form" novalidate>
+        <input type="hidden" id="pet-id" />
+
+        <div class="field">
+          <label for="nombre">Nombre</label>
+          <input type="text" id="nombre" maxlength="60" placeholder="Ej: Firulais" />
+          <small class="field__error" data-for="nombre"></small>
+        </div>
+
+        <div class="field">
+          <label>Especie</label>
+          <div class="species-picker" id="species-picker"></div>
+          <input type="text" id="especie-otra" maxlength="40" placeholder="¿Cuál especie?" hidden />
+          <small class="field__error" data-for="especie"></small>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="raza">Raza</label>
+            <input type="text" id="raza" maxlength="60" placeholder="Ej: Labrador" />
+            <small class="field__error" data-for="raza"></small>
+          </div>
+          <div class="field">
+            <label for="edad">Edad (años)</label>
+            <div class="stepper">
+              <button type="button" class="stepper__btn" data-step="-1" aria-label="Restar">−</button>
+              <input type="number" id="edad" min="0" max="40" step="1" value="0" />
+              <button type="button" class="stepper__btn" data-step="1" aria-label="Sumar">+</button>
+            </div>
+            <small class="field__error" data-for="edad"></small>
+          </div>
+        </div>
+
+        <label class="switch">
+          <input type="checkbox" id="vacunada" />
+          <span class="switch__track"><span class="switch__thumb"></span></span>
+          <span>Tiene las vacunas al día</span>
+        </label>
+
         <div class="modal__actions">
-          <button type="button" class="btn btn--ghost" data-close-modal>Cancelar</button>
-          <button type="submit" class="btn btn--primary">Guardar</button>
+          <button type="button" class="btn btn--ghost" data-close>Cancelar</button>
+          <button type="submit" class="btn btn--primary" id="submit-btn">Guardar mascota</button>
         </div>
       </form>
     </div>
   </div>
+
+  <!-- Modal confirmar eliminación -->
+  <div id="confirm-modal" class="modal" hidden>
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__card modal__card--small" role="alertdialog" aria-modal="true">
+      <span class="confirm__icon">🗑️</span>
+      <h2>¿Eliminar a <span id="confirm-name"></span>?</h2>
+      <p class="muted">Esta acción borra el registro de la base de datos y no se puede deshacer.</p>
+      <div class="modal__actions modal__actions--center">
+        <button type="button" class="btn btn--ghost" data-close>Cancelar</button>
+        <button type="button" class="btn btn--danger" id="confirm-delete-btn">Sí, eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
 
   <script src="app.js"></script>
 </body>
